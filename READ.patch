@@ -1,0 +1,89 @@
+*** README.orig	2020-12-08 11:01:42.239584537 +0100
+--- README	2020-12-08 11:11:31.257939137 +0100
+***************
+*** 10,15 ****
+--- 10,77 ----
+  Dependencies
+  -------------------------------------------------------------------------------
+  
++ This list of packages is needed to build this package + basic devel packages for building programms:
++ 
++ alsa-lib-devel
++ colord-devel
++ cups-devel
++ gcr-devel
++ geoclue2-devel
++ geocode-glib-devel
++ gmp-devel
++ gnome-desktop3-devel
++ gnome-desktop-devel
++ gnutls-devel
++ gsettings-desktop-schemas-devel
++ gtk2-devel
++ iso-codes-devel
++ keyutils-libs-devel
++ krb5-devel
++ lcms2-devel
++ libcanberra-devel
++ libcom_err-devel
++ libdrm-devel
++ libfontenc-devel
++ libgudev-devel
++ libgusb-devel
++ libgweather-devel
++ libidn2-devel
++ libnotify-devel
++ libpciaccess-devel
++ libpsl-devel
++ librsvg2-devel
++ libseccomp-devel
++ libsoup-devel
++ libtasn1-devel
++ libusbx-devel
++ libverto-devel
++ libwacom-devel
++ libXfont2-devel
++ mesa-libGL-devel
++ mesa-libGL-devel
++ ModemManager-devel
++ ModemManager-glib-devel
++ nettle-devel
++ NetworkManager-libnm-devel
++ nspr-devel
++ nss-devel
++ nss-softokn-devel
++ nss-softokn-freebl-devel
++ nss-util-devel
++ p11-kit-devel
++ polkit-devel
++ pulseaudio-libs-devel
++ pulseaudio-qt-devel
++ sqlite-devel
++ startup-notification-devel
++ systemd-devel
++ upower-devel
++ xkeyboard-config-devel
++ xorg-x11-drv-wacom-devel
++ xorg-x11-server-devel
++ 
++ 
++ 
+  Required:
+  
+    * colord-1.4.4 (http://www.linuxfromscratch.org/blfs/view/systemd/general/colord.html)
+***************
+*** 59,64 ****
+--- 121,133 ----
+  python-dbusmock installed in order for the tests to complete successfully. Some
+  tests in the "power" testsuite may fail depending on the init system in use.
+  
++ Note: 
++ 
++ Following this instructions produces a different build compared to the repo build,
++ which requires you to have libgsd.so in /usr/lib64/ which is in /usr/lib64/gnome-settings-daemon-3.0/libgsd.so
++ 
++ Fix as root: ln -s /usr/lib64/gnome-settings-daemon-3.0/libgsd.so /usr/lib64/libgsd.so
++ 
+  Now, as the root user:
+  ```bash
+  ninja install
