@@ -1,0 +1,71 @@
+*** plugins/media-keys/gsd-media-keys-manager.c_org	2020-12-08 00:33:34.316300050 +0100
+--- plugins/media-keys/gsd-media-keys-manager.c	2020-12-08 10:44:30.399156924 +0100
+***************
+*** 2188,2196 ****
+                          GsdPowerActionType   action_type,
+                          gboolean             in_lock_screen)
+  {
+          switch (action_type) {
+          case GSD_POWER_ACTION_SUSPEND:
+! 	        power_action (manager, "Suspend", !in_lock_screen);
+                  break;
+          case GSD_POWER_ACTION_INTERACTIVE:
+                  if (!in_lock_screen)
+--- 2188,2217 ----
+                          GsdPowerActionType   action_type,
+                          gboolean             in_lock_screen)
+  {
++ 
++ #ifdef __aarch64__
++ 	int status = 0;
++ #endif
+          switch (action_type) {
+          case GSD_POWER_ACTION_SUSPEND:
+! #ifdef __aarch64__
+! 		// only use it on devices that have a mobile-greeter like pinephones
+! 		if( access( "/usr/bin/lightdm-mobile-greeter", F_OK ) == 0 ) {
+! 			status = system("/usr/bin/dm-tool lock");
+! 			if ( status == 0 ) {
+! 	        	       power_action (manager, "Suspend", !in_lock_screen);
+! 			} else {
+! 				g_debug ("Execution of LightDM-Lock failed for suspend!");
+! 				// done by Marius Schwarz <fedoradev@cloud-foo.de>
+! 				//  TODO: Escalate to OSD, because this is a security problem
+! 				//        Suspending a device if an intended security feature failes, is out of the question, so we deny it.
+! 			}
+! 		} else {
+! 			power_action (manager, "Suspend", !in_lock_screen);
+! 		}
+! #else 
+! 		power_action (manager, "Suspend", !in_lock_screen);
+! #endif
+                  break;
+          case GSD_POWER_ACTION_INTERACTIVE:
+                  if (!in_lock_screen)
+***************
+*** 2200,2206 ****
+--- 2221,2244 ----
+                  power_action (manager, "PowerOff", !in_lock_screen);
+                  break;
+          case GSD_POWER_ACTION_HIBERNATE:
++ #ifdef __aarch64__
++ 		// only use it on devices that have a mobile-greeter like pinephones
++ 		if( access( "/usr/bin/lightdm-mobile-greeter", F_OK ) == 0 ) {
++ 	                status = system("/usr/bin/dm-tool lock");
++         	        if ( status == 0 ) {
++ 				power_action (manager, "Hibernate", !in_lock_screen);
++ 			} else {
++ 	                        g_debug ("Execution of LightDM-Lock failed for hibernate!");
++ 				//  done by Marius Schwarz <fedoradev@cloud-foo.de>
++ 				//  TODO: Escalate to OSD, because this is a security problem
++ 				//        Suspending a device if an intended security feature failes, is out of the question, so we deny it.
++ 	                }
++ 		} else {
++ 			power_action (manager, "Hibernate", !in_lock_screen);
++ 		}
++ #else 
+                  power_action (manager, "Hibernate", !in_lock_screen);
++ #endif
+                  break;
+          case GSD_POWER_ACTION_BLANK:
+          case GSD_POWER_ACTION_LOGOUT:
