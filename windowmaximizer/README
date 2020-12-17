@@ -1,0 +1,47 @@
+This script is free to use. If you change it, place a note in your code, on which your code was build on.
+
+## It's designed for PINEPHONEs ##
+
+But can easily adapted to any screensize.
+
+Installation:
+
+place both scripts in ~/.local/bin
+chmod 755 ~/.local/bin/windowmaximizer*
+
+This example desktopfile may help to get an executable appicon in gnome:
+
+[Desktop Entry]
+Version=1.0
+Name=WindowMaximizer
+Name[de_DE]=WindowMaximizer
+Exec=windowmaximizerwatch
+#Terminal=false
+Type=Application
+StartupNotify=true
+#Icon=cs-login
+Icon=/usr/share/icons/Mint-X/apps/96/cs-login.svg
+MimeType=x-content/unix-software
+Categories=Network;
+Keywords=web;internet;
+X-Desktop-File-Install-Version=0.23
+
+
+You may wanne change the icon of it to your needs. The desktopfiles goes to /usr/share/applications .
+
+Usage:
+
+call windowmaximizerwatch to execute the mainscript in a once per second loop.
+You can execute the mainscript manually, but if it shall work automatically and remove nolonger existing window ids, 
+so that it functions correctly when they reappear, a loop is mandatory. 
+
+What does it do:
+
+It checks the orientation of the screen and send all windows, it does not have processed yet, a maximize cmd via wmctrl cmds. 
+If the orientation changes, it reprocesses all open windows again. 
+
+It also calculates the window height in the presence of ONBOARD. It does not recognize gnomes internal osk, but it should work, 
+as apps should react to the osk correctly. 
+
+ATTN: apps you would associate with gnome like gnome-maps, gnome-weather, gnomes-control-center etc. seem to ignore theire windowmanager and do theire own thing.
+This can manifest itself as window centered on screen, but not maximized fully; Windows not following at all etc. etc.  Gnome is informed.
