@@ -1,0 +1,12 @@
+#!/bin/bash
+
+i="0"
+while [ $i -lt 1 ];
+do 
+	windowmaximizer > /dev/null
+	sleep 1
+	RC=$(ps auxf| grep -c gnome-shell)
+	if [ $RC -eq 0 ]; then 
+		i=1
+	fi
+done
