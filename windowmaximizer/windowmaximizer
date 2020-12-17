@@ -1,0 +1,87 @@
+#!/bin/bash
+
+ISONBOARDOPEN=$(wmctrl -l | grep -c Onboard)
+
+RESOLUTION=$(xdpyinfo | grep dimens | awk '{print $2;}')
+X=$( echo $RESOLUTION | awk -F "x" '{print $1;}')
+Y=$( echo $RESOLUTION | awk -F "x" '{print $2;}')
+
+ORIENTATION="landscape"
+
+if [ $Y -gt $X ]; then 
+        ORIENTATION="portray";
+fi
+
+LASTORIENTATION=$(cat /tmp/display.orientation.last);
+if [ "$LASTORIENTATION" != "$ORIENTATION" ]; then
+
+        # REMOVE OLD IDs as all needs to get maxed newly, because we had a layout orientation switch
+        rm -f /tmp/liste
+fi
+
+echo "$ORIENTATION" > /tmp/display.orientation.last;
+
+# create new /tmp/liste if missing:
+
+touch /tmp/liste
+
+# place Onboard window at the correct position and define variables for wmctrl cmds:
+
+if [ "$ORIENTATION" == "portray" ]; then
+
+        wmctrl -l | grep Onboard | awk '{print "echo "$1";wmctrl -i -r "$1" -e 2,0,1170,720,270";}' | bash
+        TOP=41
+        WIDTH=720
+        if [ $ISONBOARDOPEN -eq 0 ]; then 
+                HEIGHT=1440
+        else 
+                HEIGHT=1130
+        fi
+
+else
+        wmctrl -l | grep Onboard | awk '{print "echo "$1";wmctrl -i -r "$1" -e 2,0,450,1440,270";}' | bash
+        TOP=41
+        WIDTH=1440
+        if [ $ISONBOARDOPEN -eq 0 ]; then 
+                HEIGHT=720
+        else 
+                HEIGHT=410
+        fi
+fi 
+
+# now ALL windows WITHOUT Onboard, that are still unprocessed ( not in our brain file ), get processed. This is needed as resizing causes a lot of pain to the eye, as it flickers, even if it's not needed.
+
+LISTE=$(wmctrl -l | grep -v Onboard | awk '{print $1;}')
+
+for id in $LISTE
+do 
+        echo "processing $id";
+        RC=$(grep -c $id /tmp/liste)
+        if [ $RC -eq 0 ]; then 
+                echo "resizing $id"
+                wmctrl -i -r "$id" -e 5,0,$TOP,$WIDTH,$HEIGHT
+                wmctrl -i -r "$id" -b toggle,maximized_vert,maximized_horz
+                wmctrl -i -r "$id" -e 5,0,$TOP,$WIDTH,$HEIGHT
+#               wmctrl -i -r "$id" -b remove,fullscreen
+                echo $id >> /tmp/liste
+        fi
+done
+
+# Now we check, if all ids in your brain file are still open windows. Thats needed, because same windows, get the same id, when they are closed and repopend.
+# if they are closed we need to remove the id, because we need to reposition them again on next open.
+
+LISTE=$(cat /tmp/liste)
+for id in $LISTE
+do
+
+        RC=$(wmctrl -l |grep -c $id)
+        if [ $RC -eq 0 ]; then
+                # Entferne Windows die weg sind!
+
+                echo "remove id $id";
+
+                grep -v $id /tmp/liste > /tmp/liste2;
+                rm -f /tmp/liste;
+                mv /tmp/liste2 /tmp/liste;
+        fi 
+done
