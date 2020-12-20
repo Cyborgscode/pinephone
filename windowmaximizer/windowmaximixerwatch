@@ -1,5 +1,7 @@
 #!/bin/bash
 
+rm -f /tmp/liste
+touch /tmp/liste
 i="0"
 while [ $i -lt 1 ];
 do 
