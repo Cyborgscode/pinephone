@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Flashlight
+Exec=/usr/local/bin/flashlight
+Type=Application
+StartupNotify=false
+Icon=/usr/share/icons/breeze/actions/32/flashlight-on.svg
+Name[de_DE]=Taschenlampe
