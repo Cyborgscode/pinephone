@@ -29,6 +29,11 @@ OR
 
 use a different path and name in the desktopfile.
 
+6. OPTIONAL .. AUTOSTART
+
+If you want autostarting it on login of your phone, copy the desktop file to ~/.config/autostart/ .
+
+
 
 ### HOW IT WORKS ###
 
