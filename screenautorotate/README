@@ -1,0 +1,41 @@
+### LICENSE ###
+
+This app is free. If you modify it, give it credit.
+
+The supplied image here is limited to the usage with exactly this app version on Pinephones or Libre M5. 
+
+You are not allowed to use the image anywhere else
+
+###############################################
+
+
+Hi,
+
+do anything as root.
+
+1. copy the desktop file to /usr/share/application/
+
+2. chmod 644 /usr/share/application/screenrotate.desktop
+
+3. copy autorotate script /usr/local/sbin/   
+
+4. chmod 755  /usr/local/sbin/autorotate
+
+5. 
+
+place a matching picture for the logo at /home/pine/Bilder/screenrotate.png
+
+OR
+
+use a different path and name in the desktopfile.
+
+
+### HOW IT WORKS ###
+
+You need: wlr-randr installed. 
+
+The /sys/bus path can change from kernel to kernel. These one are for Megi's FEDORA AARCH64 5.11.2 Kernel. 
+
+The app kills itself, if it's already running, otherwise it starts. So it's easy to tunr it on or off by starting it from the desktop.
+
+@marius:linuxphones.de
