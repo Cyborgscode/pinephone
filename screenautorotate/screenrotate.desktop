@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Screenrotate
+Exec=autorotate
+Type=Application
+StartupNotify=false
+Icon=/home/pine/Bilder/screenrotate.png
+Name[de_DE]=Bildschirmdrehen
