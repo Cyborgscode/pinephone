@@ -39,7 +39,7 @@ do
         if [ $Y -lt -15000 ] && [ "$OLD" != "270" ]; then
                 #Landscape 270
 		wlr-randr --output DSI-1 --transform 270
-		$OLD="270"
+		OLD="270"
         fi
 	sleep 0.5
 done
