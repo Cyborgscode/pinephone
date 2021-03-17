@@ -7,13 +7,24 @@ if [ $COUNT -gt 2 ]; then
 	exit
 fi
 
+# Autodetection
+
+DEVID="iio:deviceX"
+
+DEVICES=$(ls /sys/bus/iio/devices/)
+for dev in $DEVICES; do
+	if [ -f /sys/bus/iio/devices/$dev/in_accel_x_raw ]; then
+		DEVID="$dev"
+	fi
+done
+
 OLD=""
 
 while :
 do
-	X=$(cat /sys/bus/iio/devices/iio:device2/in_accel_x_raw)
-	Y=$(cat /sys/bus/iio/devices/iio:device2/in_accel_y_raw)
-	Z=$(cat /sys/bus/iio/devices/iio:device2/in_accel_z_raw)
+	X=$(cat /sys/bus/iio/devices/$DEVID/in_accel_x_raw)
+	Y=$(cat /sys/bus/iio/devices/$DEVID/in_accel_y_raw)
+	Z=$(cat /sys/bus/iio/devices/$DEVID/in_accel_z_raw)
 
 	if [ $X -gt 15000 ] && [ "$OLD" != "N" ]; then
 		# portray mode
