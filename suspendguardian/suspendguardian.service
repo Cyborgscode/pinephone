@@ -1,0 +1,22 @@
+[Unit]
+Description=SuspendGuardian
+Documentation=https://github.com/Cyborgscode/pinephone
+
+# start it after phosh started, no need to cut cpu power on boot ;)
+Wants=phosh.service
+After=phosh.service
+
+[Service]
+ExecStart=/usr/bin/suspendguardian
+TimeoutStartSec=10
+User=0
+PAMName=login
+WorkingDirectory=~
+Restart=always
+RestartSec=5s
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical.target
