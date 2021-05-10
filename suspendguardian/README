@@ -1,0 +1,65 @@
+#
+# Defaults are :
+#
+# cpupowerdown = 1 ( seconds )
+# suspendtimer  = 30 (seconds )
+# suspendoncharge = 0
+# respectgsettings = 0
+
+set cpupowerdown to 0 to avoid cpu cores being powered off
+set suspendtimer to 0 to avoid suspending your phone
+set suspendoncharge to 1 to suspend while the charger if connected AND a suspend should happen.
+set respectgsettings to 1 to follow the gsettings of PINE user. 
+
+## ATTN: if your pinephone distro does not use "pine" as user, you need to recompile the source accordingly!
+
+
+Settingslocation: /etc/suspendguardian
+
+Build:
+
+gcc suspendguardian.c -o /usr/bin/suspendguardian
+chmod 700 /usr/bin/suspendguardian
+
+Create defaults:
+
+mkdir -p /etc/suspendguardian
+echo 30 > /etc/suspendguardian/suspendtimer
+echo 1 > /etc/suspendguardian/cpupowerdown
+echo 0 > /etc/suspendguardian/suspendoncharge
+echo 0 > /etc/suspendguardian/respectgsettings
+
+place the suspendguardian.service file into /usr/lib/systemd/system/
+
+systemctl daemon-reload
+systemctl enable -once suspendguardian
+
+Debugging:
+
+stop systemd service
+start suspendguardian in a rootshell
+watch what happens
+
+NOTE:
+
+if you system does not use Phosh or a gnome compatible system, "respectgsettings" option will not work for you. Disable it to get a clean run.
+
+If you use a different kernel than fedora, it's possible you need to adapt the /sys/class/ paths and filenames.
+
+Description:
+
+it simply disables 3 CPU Cores when the display wents offline, may give problems while doing calls and the screen gets powered off. 
+As long as the screen just gets dark, nothing happens.
+If the screen is lit again, the cores get enabled again.
+
+After X seconds system goes into suspend. Default is 30 seconds, hardcoded are 60s as fallback default. This is far less time as gsettings allow.
+
+Suspend can be intercepted by creating a file /var/run/suspendguardian.intercept which gives other apps the opportunity to delay a suspend for 10 seconds every time
+the suspendtimer is hit. 
+
+Suspend and Cpu Core Powerdown can be configured. See on top of this file.
+
+Have Fun.
+
+
+
