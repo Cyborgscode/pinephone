@@ -1,9 +1,10 @@
 
+
 /* LICENSE 
 
     Author: Marius Schwarz - support@evolution-hosting.eu  Braunschweig, Germany
-    Date of Release: 10.5.2021
-    Revision: 0.1
+    Date of Release: 22.5.2021
+    Revision: 0.2
 
     This SOFTWARE is provided as is. No warrenties of any sort, that it won't damage something. 
 
@@ -135,6 +136,47 @@ int get(char *filename) {
 	return -1;
 }
 
+char* readFile(char *filename) {
+	int number =0;
+	FILE *fd = fopen(filename,"r");
+        if ( fd != NULL ) {
+
+		struct stat info;
+		if ( lstat( filename, &info ) == 0 ) {
+			// read only if it's not tampered
+			if ( S_ISLNK(info.st_mode) == 0 ) {
+				size_t len = info.st_size;
+				if ( len == 0 ) {
+					// could be a proc file... 
+					len = 131070; // gives exactly 128kb with the +2 below
+				}
+					
+				char *buffer = malloc(len+2);
+				if ( buffer != NULL ) {
+					size_t ret = fread(buffer, 1, len, fd);
+					if ( ret > 0 ) {
+	                                        fclose(fd);
+                       	                        return buffer;
+					} else {
+						printf("READ ERROR for %s:could not read %d bytes:aborting.\n", filename, info.st_size);
+					}
+				} else {
+					printf("READ ERROR for %s:could not allocate enough memory:aborting.\n", filename );
+				}
+			} else {
+				printf("READ ERROR for %s:file is a link:aborting.\n", filename );
+			} 
+		} else {
+			printf("READ ERROR for %s:file is a link:aborting.\n", filename );
+		}
+		// close file for all errorcodes
+		fclose(fd);
+	} else {
+		printf("READ ERROR for %s:could not open file:aborting.\n", filename );
+	}
+	return NULL;
+}
+
 const int STATE_OFF = 4;
 const int STATE_ON = 0;
 const char* charging = "Charging\n";  // this is what you get by reading a kernel file... 
@@ -221,17 +263,37 @@ int main (int    argc, char *argv[]) {
 						 printf("SUSPEND IGNORED.. we honor gsettings and it does not want to suspend -> do %s\n", buffer);
 
 					} else {
+						// Lets find out, if sound playback of ANY source is played: 
+						char *status = readFile("/proc/asound/card0/pcm0p/sub0/status");
+						if ( strstr(status,"closed") >= status ) {
 
-						// IT COULD be required to interrupt the timer, in case KDE connect or any other background task needs to stay online.
-			 			if ( access("/var/run/suspendguardian.intercept",F_OK) != 0 ) {
-							printf("Going to suspend...\n");
-							int status = system("systemctl suspend");
-							printf("call suspend rc=%d\n", status);
+							// IT COULD be required to interrupt the timer, in case KDE connect or any other background task needs to stay online.
+				 			if ( access("/var/run/suspendguardian.intercept",F_OK) != 0 ) {
+								printf("Going to suspend...\n");
+								int status = system("systemctl suspend");
+								printf("call suspend rc=%d\n", status);
+							} else {
+								printf("SUSPEND INTERCEPTED .. rewind TIMER by 10 seconds!\n");
+								if ( timer > 10 ) {
+									timer -= 10;
+								} else timer = 1;
+							}
 						} else {
-							printf("SUSPEND INTERCEPTED .. rewind TIMER by 10 seconds!\n");
-							if ( timer > 10 ) {
-								timer -= 10;
-							} else timer = 1;
+						
+						/*  Filecontent if playback is running... (can be of later use)
+state: RUNNING
+owner_pid   : 790
+trigger_time: 569.377071676
+tstamp      : 571.758585082
+delay       : 6496
+avail       : 59040
+avail_max   : 64512
+-----
+hw_ptr      : 114336
+appl_ptr    : 120832
+*/
+							printf("Playback detected .. reset TIMER to 1 seconds!\n%s\n",status); // because: if playback is finished, the user may decide to choose something else, would be bad style if we would suspend to soon after the playback ended.
+							timer = 1;
 						}
 					}
 				}
