@@ -235,11 +235,30 @@ int main (int    argc, char *argv[]) {
 			//
 			laststate = state;
 
-			// COUNT only if the display is offline
-			if ( state == STATE_OFF ) {
-				timer++;
-			}
+			// get audio playback 	
+			char *status = readFile("/proc/asound/card0/pcm0p/sub0/status");
 
+			// COUNT only if the display is offline && Sound is out
+			if ( state == STATE_OFF && strstr(status,"closed") >= status ) {
+				timer++;
+			} else {
+
+                                                /*  Filecontent if playback is running... (can be of later use)
+state: RUNNING
+owner_pid   : 790
+trigger_time: 569.377071676
+tstamp      : 571.758585082
+delay       : 6496
+avail       : 59040
+avail_max   : 64512
+-----
+hw_ptr      : 114336
+appl_ptr    : 120832
+*/
+                     	//	printf("Playback detected .. reset TIMER to 1 seconds!\n%s\n",status); // because: if playback is finished, the user may decide to choose something else, would be bad style if we would suspend to soon after the playback ended.
+                        	timer = 0;
+                        }
+			
 			// if we reach CPUPOWERDOWN => disable 3 cores .. 
 			if ( timer == cpupowerdown ) {
 				printf("Switching OFF CPU Cores 1-3\n");
@@ -263,10 +282,6 @@ int main (int    argc, char *argv[]) {
 						 printf("SUSPEND IGNORED.. we honor gsettings and it does not want to suspend -> do %s\n", buffer);
 
 					} else {
-						// Lets find out, if sound playback of ANY source is played: 
-						char *status = readFile("/proc/asound/card0/pcm0p/sub0/status");
-						if ( strstr(status,"closed") >= status ) {
-
 							// IT COULD be required to interrupt the timer, in case KDE connect or any other background task needs to stay online.
 				 			if ( access("/var/run/suspendguardian.intercept",F_OK) != 0 ) {
 								printf("Going to suspend...\n");
@@ -278,23 +293,6 @@ int main (int    argc, char *argv[]) {
 									timer -= 10;
 								} else timer = 1;
 							}
-						} else {
-						
-						/*  Filecontent if playback is running... (can be of later use)
-state: RUNNING
-owner_pid   : 790
-trigger_time: 569.377071676
-tstamp      : 571.758585082
-delay       : 6496
-avail       : 59040
-avail_max   : 64512
------
-hw_ptr      : 114336
-appl_ptr    : 120832
-*/
-							printf("Playback detected .. reset TIMER to 1 seconds!\n%s\n",status); // because: if playback is finished, the user may decide to choose something else, would be bad style if we would suspend to soon after the playback ended.
-							timer = 1;
-						}
 					}
 				}
 			}
