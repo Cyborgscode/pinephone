@@ -1,10 +1,9 @@
 
-
 /* LICENSE 
 
     Author: Marius Schwarz - support@evolution-hosting.eu  Braunschweig, Germany
-    Date of Release: 22.5.2021
-    Revision: 0.2
+    Date of Release: 18.1.2023
+    Revision: 0.3
 
     This SOFTWARE is provided as is. No warrenties of any sort, that it won't damage something. 
 
@@ -26,10 +25,13 @@
 #include <stdlib.h>
 #include <time.h>
 #include <signal.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
 
 int exiting = 0;
+
+
 
 void sig_handler( int signum) {
 
@@ -50,6 +52,87 @@ int set(char *filename, char *value) {
 		return 0;
 	}
 	return 1;
+}
+
+int checkConnectedBluetooth() {
+
+  FILE *fp;
+  char path[1035];
+
+  int status = 0;
+  fp = popen("/usr/bin/bluetoothctl info", "r");
+  if (fp == NULL) {
+    printf("Failed to run /usr/bin/bluetoothctl\n" );
+    return 0;
+  }
+  while (fgets(path, sizeof(path), fp) != NULL) {
+    if ( strstr( path, "Connected: yes" ) > 0 ) {
+	status = 1;
+    }
+  }
+  fclose(fp);
+  return status;
+
+
+}
+
+int checkMPRIS()
+{
+
+  FILE *fp;
+  char path[1035];
+  char *buffer = malloc(1000);
+
+  int status = 0;
+
+  /* Open the command for reading. */
+  fp = popen("/usr/bin/dbus-send --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.ListNames", "r");
+  if (fp == NULL) {
+    printf("Failed to run command\n" );
+    return 0;
+  }
+
+  /* Read the output a line at a time - output it. */
+  while (fgets(path, sizeof(path), fp) != NULL) {
+//    printf("%s\n", path);
+    if ( strstr( path, "org.mpris.MediaPlayer2" ) > 0 ) {
+    	char* a = strstr( path, "\"");
+    	if ( a > 0 ) {
+	    	char *b = strstr( a+1, "\"");
+	    	if ( b > 0 ) {
+		    	int len = (int)(b-a-1);
+		    	if ( len < 1000 ) {
+		    		memset(buffer, 0, 1000);
+			   	strncpy(buffer, a+1, len);
+				int fixedlen = strlen("dbus-send --session --print-reply --type=method_call --dest= /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get string:'org.mpris.MediaPlayer2.Player' string:'PlaybackStatus'");
+				char* execbuffer = malloc(fixedlen + len+1);
+				memset(execbuffer,0,len+1);
+				sprintf(execbuffer, "dbus-send --session --print-reply --type=method_call --dest=%s /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get string:'org.mpris.MediaPlayer2.Player' string:'PlaybackStatus'", buffer);
+				FILE *subfp = popen(execbuffer, "r");
+				if ( subfp != NULL ) {
+					while (fgets(path, sizeof(path), subfp) != NULL) {
+						if ( strstr( path , "Playing" ) > 0 ) {
+							status = 1;
+						}	
+					}
+					fclose( subfp ) ;
+				}
+		
+			} else {
+				printf("readPipe(): Bufferoverflow with %d bytes denied.\n", len);
+				pclose(fp);		
+				return status;
+			}
+		} else printf("readPipe(): mailformed MPRIS result:\n%s\n", path);
+	} else printf("readPipe(): mailformed MPRIS result:\n%s\n", path);
+    	
+    }
+  }
+
+  /* close */
+  pclose(fp);
+
+  return status;
 }
 
 char *readfile(char *filename) {
@@ -234,12 +317,25 @@ int main (int    argc, char *argv[]) {
 			// remember the last state or you can't see a difference..
 			//
 			laststate = state;
+			
+/* DOES NOT WORK AS ROOT, ONLY AS USER !!! 
 
-			// get audio playback 	
+			printf("checking MPRIS\n");
+			int mstatus = checkMPRIS();
+			if ( mstatus == 1 ) {
+				printf("MPRIS Status = %d discovered\n", mstatus);
+				timer = 0;
+			}
+*/			
+			
+//			printf("checking Bluetooth\n");
+			int mstatus = checkConnectedBluetooth();
+			
+			// get audio playback 
 			char *status = readFile("/proc/asound/card0/pcm0p/sub0/status");
 
 			// COUNT only if the display is offline && Sound is out
-			if ( state == STATE_OFF && strstr(status,"closed") >= status ) {
+			if ( state == STATE_OFF && strstr(status,"closed") >= status && mstatus == 0) {
 				timer++;
 			} else {
 
@@ -258,14 +354,15 @@ appl_ptr    : 120832
                      	//	printf("Playback detected .. reset TIMER to 1 seconds!\n%s\n",status); // because: if playback is finished, the user may decide to choose something else, would be bad style if we would suspend to soon after the playback ended.
                         	timer = 0;
                         }
-			
+
 			// if we reach CPUPOWERDOWN => disable 3 cores .. 
 			if ( timer == cpupowerdown ) {
 				printf("Switching OFF CPU Cores 1-3\n");
 				set("/sys/devices/system/cpu/cpu1/online","0");
 				set("/sys/devices/system/cpu/cpu2/online","0");
 				set("/sys/devices/system/cpu/cpu3/online","0");
-			}
+			} 
+
 			// it's logically impossible to have timer=0 here, but just in case ;)
 			if ( timer == gotosuspend && gotosuspend > 0 ) {
 
