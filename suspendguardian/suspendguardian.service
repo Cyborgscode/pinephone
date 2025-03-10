@@ -3,8 +3,8 @@ Description=SuspendGuardian
 Documentation=https://github.com/Cyborgscode/pinephone
 
 # start it after phosh started, no need to cut cpu power on boot ;)
-Wants=phosh.service
-After=phosh.service
+# Wants=lightdm.service
+After=lightdm.service
 
 [Service]
 ExecStart=/usr/bin/suspendguardian
